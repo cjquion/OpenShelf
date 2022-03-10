@@ -2,7 +2,6 @@ use std::fs;
 use std::net::TcpStream;
 use std::thread;
 
-
 use rodio::{Decoder, OutputStream, Sink};
 use rodio::source::{SineWave, Source};
 
@@ -14,6 +13,8 @@ fn main() {
     const SERVER_ADDRESS = "127.0.0.1:7878";
     const CHUNK_SIZE: u32 = 10240;
 
+
+    let player = Player::new();
     let download_handle = thread::spawn(move || {
         download_track()
     });
