@@ -10,10 +10,10 @@ use rodio::{Decoder, OutputStream, Sink};
 use rodio::source::{SineWave, Source};
 
 #[derive(Debug, Clone)]
-struct VaultError;
+struct VaultError {}
 
 #[derive(Debug, Clone)]
-struct TrackError
+struct TrackError {}
 
 impl fmt::Display for VaultError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -42,25 +42,22 @@ fn main() {
     let default_track = "test.mp3";
     let default_port = "127.0.0.1:7878";
     let vault_path = "";
-    let opened_track = File::open(default_track).unwrap();
+    let opened_track = fs::File::open(default_track).unwrap();
     let listener = TcpListener::bind(default_port).unwrap();
-    let pool = ThreadPool::new(4);
-    
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        pool.execute(|| {
-            handle_connection(stream);
-        });
-    }
 }
 
+/*
 fn handle_connection(mut stream: TcpStream) {
     let mut rx_buffer = [0; 1024];
     stream.read(&mut rx_buffer).unwrap();
-    let (status, file) = if buffer.starts_with(get) {}
-}
+    let (status, file) = if rx_buffer.starts_with("") {
 
-fn register_vault(filepath: Path, vault_name: String,) -> Result<(), Error> {
+    };
+}
+*/
+
+
+fn register_vault(filepath: Path, vault_name: String,) -> Result<(), VaultError> {
     for entry in fs::read_dir(filepath).unwrap()? {
         let entry = entry?;
         let path = entry.path();

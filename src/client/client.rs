@@ -26,7 +26,7 @@ fn download_track() {
         let client_agent = reqwest::blocking::Client::new();
 
         let response = client_agent.head(url).send()?;
-        let length_raw = reponse
+        let length_raw = response
             .headers()
             .get(CONTENT_LENGTH)
             .ok_or("response does not contain content length.")?;

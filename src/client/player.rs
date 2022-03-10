@@ -3,7 +3,7 @@ use rodio::{Decoder, OutputStream, Sink};
 use rodio::source::{SineWave, Source};
 pub struct Track {}
 
-#[(Derive, Debug)]
+#[derive(Debug, Clone)]
 struct PlaybackError;
 
 enum PlaybackOrderSetting {
@@ -20,7 +20,7 @@ enum PlaybackStatus {
 }
 
 struct Player {
-    current_playback: PlaybackStatus
+    current_playback: PlaybackStatus,
     currently_playing: Option<Track>,
     current_playmode: PlaybackOrderSetting,
     output_stream: Option<Sink>,
@@ -34,7 +34,7 @@ impl Player {
         let (_stream, stream_handle) = OutputStream::try_default()?;     
         let sink = Sink::new_idle(&stream_handle).unwrap();
         Ok(Player {
-            current_playback: playbackStatus::Stopped, 
+            current_playback: PlaybackStatus::Stopped, 
             currently_playing: None, 
             current_playmode: PlaybackOrderSetting::Straight, 
             output_stream: sink
@@ -52,11 +52,5 @@ impl Player {
     pub fn queue(&self, track: Source) -> Result<(), PlaybackError> {
         &self.output_stream.append(track);
     }
-
-
 }
 
-pub fn play_track() {
-    let (_stream, stream_handle) = OutputStream::try_default()?;
-    let playing_track = stream_handle.play_once(BufReader::new(Track.contents));
-}
