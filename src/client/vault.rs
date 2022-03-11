@@ -6,8 +6,26 @@ use std::thread;
 use std::path::Path;
 use std::fmt;
 
-use rodio::{Decoder, OutputStream, Sink};
-use rodio::source::{SineWave, Source};
+use rustbreak::{
+    deser::Ron,
+    FileDatabase,
+};
+
+use rodio::{
+    Decoder, 
+    OutputStream, 
+    Sink
+};
+use rodio::source::{
+    SineWave, 
+    Source
+};
+
+#[macro_use]
+extern crate serde_derive;
+
+#[macro_use]
+extern crate lazy_static;
 
 #[derive(Debug, Clone)]
 struct VaultError {}
@@ -21,6 +39,24 @@ impl fmt::Display for VaultError {
     }
 }
 
+type VAULT = FileDatabase<Config, Ron>;
+pub trait Vault {
+    type Data; 
+    fn initialize() -> Result<Box<Self>, failure::Error> {};
+    fn refresh(&self, path: Path) -> {};
+    fn data(&self) -> {}
+}
+
+lazy_static! { 
+    static ref CONFIG: VAULT = {
+        let vault = FileDatabase::load_from_path_or_default("")
+            .expect();
+        vault.load().expect();
+        vault
+    };
+}
+
+#[derive(Hash, Eq, PartialEq, Debug, Serialize, Deserialize, Clone)]
 pub struct Track { 
     pub id: u64,
     pub title: String,
@@ -36,6 +72,7 @@ pub struct Artist {
     pub name: String,
     pub alias: String,
     pub bio: String,
+    pub tag: Vec<String>,
 }
 
 fn main() {
@@ -56,7 +93,6 @@ fn handle_connection(mut stream: TcpStream) {
 }
 */
 
-
 fn register_vault(filepath: Path, vault_name: String,) -> Result<(), VaultError> {
     for entry in fs::read_dir(filepath).unwrap()? {
         let entry = entry?;
@@ -70,5 +106,5 @@ fn register_vault(filepath: Path, vault_name: String,) -> Result<(), VaultError>
 }
 
 fn register_track(path: Path) -> Result<(), TrackError>{
-        
+
 }
