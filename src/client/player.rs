@@ -1,34 +1,39 @@
-use std::fs;
-use std::io::BufReader;
-use std::path::Path;
+use crate::client::vault::{Track};
 
+use std::net::TcpStream;
+use std::thread;
+use std::fs;
+use std::io::{
+    BufReader,
+    Error,
+    ErrorKind,
+};
+use std::path::Path;
+use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
+use std::hash::{Hash, Hasher};
+use std::fmt;
+
+use lofty::{id3, mp3, Probe, Tag, TagItem};
 use rodio::{Decoder, OutputStream, Sink};
 use rodio::source::{SineWave, Source};
 
-pub struct Track {
-    pub title: String,
-    pub artist: String,
-    pub artist_code: u64, 
-    pub path: Path,
-}
+use reqwest::header::{HeaderValue, CONTENT_LENGTH, RANGE};
+use reqwest::StatusCode;
 
 #[derive(Debug, Clone)]
-struct TrackError;
+struct PlaybackError;
 
-impl fmt::Display for TrackError -> fmt::Result {
+#[derive(Debug)]
+struct PlayerError {}
+
+#[derive(Debug, Clone)]
+struct PlaybackError;
+
+impl fmt::Display for PlaybackError {
     fn fmt(&self, f: &mut fmt::Formatter) {
         write!(f, "invalid track file.");
     } 
 }
-
-impl Track {
-    fn new(path: Path) -> Result<Track, TrackError> {
-    
-    }
-}
-
-#[derive(Debug, Clone)]
-struct PlaybackError;
 
 enum PlaybackOrderSetting {
     Straight, // DEFAULT
@@ -50,9 +55,6 @@ struct Player {
     output_stream: Option<Sink>,
 }
 
-#[derive(Debug)]
-struct PlayerError {}
-
 impl Player {
     pub fn new(output: OutputStream) -> Result<Self, PlayerError> {
         let (_stream, stream_handle) = OutputStream::try_default()?;     
@@ -63,6 +65,7 @@ impl Player {
         })
     }
 
+    // Return the contents of an audio file
     pub fn load_track(&self, filepath: Path) -> Result<(), PlaybackError> {
         let f = fs::File::open(filepath).unwrap();
         let samples_buffer = BufReader::new(f).unwrap();
@@ -70,12 +73,14 @@ impl Player {
         Ok(samples_buffer, metadata)
     } 
     
+    // Returns the tag, 
+    // if there is none, it creates and returns a new one
     pub fn load_metadata(&self, filepath: Path) -> Result<(), PlaybackError> {
         let mut tag = match id3::read_from_tag(filepath).unwrap() {
             Ok(tag) => tag,
             Err(Error{kind: ErrorKind::NoTag, ..}) => id3::Tag::new(),
             Err(err) => return Err(Box::new(err)), 
-        }
+        };
         Ok(tag)
     }
 
@@ -87,4 +92,3 @@ impl Player {
         &self.output_stream.append(track);
     }
 }
-
