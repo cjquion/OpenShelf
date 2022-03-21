@@ -12,16 +12,15 @@ use std::path::Path;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 use std::fmt;
+use std::sync::{Arc, Mutex};
 
-use lofty::{id3, mp3, Probe, Tag, TagItem};
+
+use lofty::{id3, mp3, Probe, Tag, TagItem, TaggedFile};
 use rodio::{Decoder, OutputStream, Sink};
 use rodio::source::{SineWave, Source};
 
 use reqwest::header::{HeaderValue, CONTENT_LENGTH, RANGE};
 use reqwest::StatusCode;
-
-#[derive(Debug, Clone)]
-struct PlaybackError;
 
 #[derive(Debug)]
 struct PlayerError {}
@@ -76,9 +75,8 @@ impl Player {
     // Returns the tag, 
     // if there is none, it creates and returns a new one
     pub fn load_metadata(&self, filepath: Path) -> Result<(), PlaybackError> {
-        let mut tag = match id3::read_from_tag(filepath).unwrap() {
+        let mut tag = match Tag::new().read_from_path(filepath).unwrap() {
             Ok(tag) => tag,
-            Err(Error{kind: ErrorKind::NoTag, ..}) => id3::Tag::new(),
             Err(err) => return Err(Box::new(err)), 
         };
         Ok(tag)

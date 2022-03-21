@@ -29,8 +29,6 @@ use rodio::source::{
 
 use lofty::{id3, mp3, Probe, Tag, TagItem, TaggedFile, AudioFile};
 
-#[macro_use]
-extern crate lazy_static;
 
 #[derive(Debug, Clone)]
 struct VaultError {}
