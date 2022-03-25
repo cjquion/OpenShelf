@@ -1,5 +1,5 @@
 use std::{
-    fmt, env, thread, fs, path::Path
+    fmt, env, thread, fs, path::Path, time::Duration,
 };
 
 use std::io::{
@@ -28,6 +28,9 @@ use termion::{
 
 #[derive(Debug)]
 struct PlaybackError {}
+
+// Work around for fmt::Display
+pub struct TrackDuration(pub Duration);
 
 #[derive(Debug)]
 enum Commands {
@@ -61,6 +64,15 @@ struct Player {
     current_playback_order: PlaybackOrderSetting,
     playback_queue: Vec<Track>,
     output_sink: Option<Sink>
+}
+
+impl fmt::Display for TrackDuration {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let seconds = &self.0.as_secs() % 60;
+        let minutes = (&self.0.as_secs() / 60) % 60;
+        let hours = (&self.0.as_secs() / 60) / 60;
+        write!(f, "{}:{}:{}", hours, minutes, seconds)
+    }
 }
 
 impl Player {
@@ -97,6 +109,8 @@ impl Player {
             Some(primary_tag) => primary_tag,
             None => track_metadata.first_tag().unwrap(),
         };
+        let properties = track_metadata.properties();
+
 
         // Extract the basic data
         let artist = match metadata_tag.artist() {
@@ -107,6 +121,7 @@ impl Player {
             Some(title) => title,
             None => "Unknown"
         };
+        let duration = properties.duration();
        
         // Set up the terminal for io,
         // then display basic info about the track as well as usage.
@@ -129,10 +144,11 @@ impl Player {
         stdout.flush().unwrap();
 
         write!(stdout, 
-            "{}playing {} by {}{}",
+            "{}playing {} by {}. {}.{}",
             termion::cursor::Goto(1,3),
             artist,    
             title,
+            TrackDuration(duration),
             termion::cursor::Hide,
         ).unwrap();
         stdout.flush().unwrap();
