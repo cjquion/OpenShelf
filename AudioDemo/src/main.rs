@@ -44,6 +44,7 @@ enum PlaybackOrderSetting {
     Shuffle
 }
 
+#[derive(PartialEq, Debug)]
 enum PlaybackStatus {
     Playing,
     Paused, 
@@ -98,8 +99,14 @@ impl Player {
         };
 
         // Extract the basic data
-        let artist = metadata_tag.artist().map(str::to_string).unwrap();
-        let title = metadata_tag.album().map(str::to_string).unwrap();
+        let artist = match metadata_tag.artist() {
+            Some(artist) => artist,
+            None => "Unknown" 
+        };
+        let title = match metadata_tag.album() { 
+            Some(title) => title,
+            None => "Unknown"
+        };
        
         // Set up the terminal for io,
         // then display basic info about the track as well as usage.
@@ -108,24 +115,22 @@ impl Player {
         let mut stdout = stdout().into_raw_mode().unwrap();
         
         write!(stdout,
-            "{}{}press p to toggle pause/play.{}",
+            "{}{}press p to toggle pause/play. {}press q to quit.",
             termion::clear::All,
             termion::cursor::Goto(1,1),
-            termion::cursor::Hide
+            termion::cursor::Goto(1,2),
         ).unwrap();
-
+        stdout.flush().unwrap();
         write!(stdout,
-            "{}{}press q to stop playback.{}",
-            termion::clear::All,
-            termion::cursor::Goto(1,1),
-            termion::cursor::Hide,
+            "{}currently: {:?}",
+            termion::cursor::Goto(1,4),
+            self.current_playback_status,
         ).unwrap();
         stdout.flush().unwrap();
 
         write!(stdout, 
-            "{}{}playing {} by {}{}",
-            termion::clear::All,
-            termion::cursor::Goto(1,1),
+            "{}playing {} by {}{}",
+            termion::cursor::Goto(1,3),
             artist,    
             title,
             termion::cursor::Hide,
@@ -135,27 +140,56 @@ impl Player {
         // Play the song!
         sink.append(source);
         self.current_playback_status = PlaybackStatus::Playing;
+        write!(stdout,
+            "{}currently: {:?}",
+            termion::cursor::Goto(1,4),
+            self.current_playback_status,
+        ).unwrap();
+        stdout.flush().unwrap();
         
         // Listen for keyboard events
         'playing: loop {
             let key = stdin.next();
-            match key.unwrap().unwrap() { 
-                Key::Char('q') => break Ok(()),
-                Key::Char('p') => break Ok(()),
-                _ => println!("Key not recognized."),
+            match key { 
+                Some(Ok(Key::Char('q'))) => {
+                    write!(stdout, "Quit command received. Stopping playback.");
+                    break Ok(())
+                },
+                Some(Ok(Key::Char('p'))) => {
+                    if self.current_playback_status == PlaybackStatus::Playing {
+                        self.current_playback_status = PlaybackStatus::Paused;
+                        sink.pause();
+                        write!(stdout,
+                            "{}{}currently: {:?}",
+                            termion::clear::CurrentLine,
+                            termion::cursor::Goto(1,4),
+                            self.current_playback_status,
+                        ).unwrap();
+                        stdout.flush().unwrap();
+                    } else if self.current_playback_status == PlaybackStatus::Paused {
+                        self.current_playback_status = PlaybackStatus::Playing;
+                        sink.play();
+                        write!(stdout,
+                            "{}{}currently: {:?}",
+                            termion::clear::CurrentLine,
+                            termion::cursor::Goto(1,4),
+                            self.current_playback_status,
+                        ).unwrap();
+                        stdout.flush().unwrap();
+                    }
+                }
+                _ => continue,
             }
         }
     }
 }
 
-
-
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
         let target_path = Path::new(&args[1]);
-
         let mut player = Player::new();
+
         player.play(target_path);
     }
 }
