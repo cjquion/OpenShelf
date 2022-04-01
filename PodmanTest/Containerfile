@@ -1,0 +1,26 @@
+FROM ubi8
+MAINTAINER Chris Quion <cquion@redhat.com> 
+
+LABEL description="Testing rust and libraries in containers"
+USER root 
+
+COPY ./ ./
+
+# Necessary for reqwest
+RUN yum install -y openssl-devel
+
+# Necessary for rustc
+RUN dnf install -y gcc
+
+# Installing rust
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+
+# Make cargo cmds available
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Necessary for sound card access on linux
+RUN yum install -y alsa-lib-devel
+
+RUN cargo build --release
+CMD ["./target/release/PodmanTest"]
+

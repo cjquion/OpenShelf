@@ -1,0 +1,13 @@
+FROM ubi8
+MAINTAINER Chris Quion <cquion@redhat.com> 
+
+USER root 
+
+COPY ./ ./
+
+
+RUN yum install -y rust-toolset
+RUN yum install -y alsa-lib-devel
+RUN cargo build 
+CMD ["./target/release/PodmanMusicTest"]
+

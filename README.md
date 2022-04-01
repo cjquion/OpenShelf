@@ -21,6 +21,11 @@ standard features:
 
 usage 
 --
+Play a track.
+```
+openshelf play <<path>>
+```
+
 Establishes a local directory to act as a vault for OpenShelf.
 ```
 openshelf register-vault --local <<path>> name
@@ -36,12 +41,13 @@ Syncs your files
 openshelf sync-vault <<vaultname>>
 ```
 
-```
-openshelp play <<path>>
-```
-
 Queue up a song.
 ```
 openshelf q <<>>
 ```
+
+details
+--
+runs on openshift!
+storage/persistence tier == vault pod 
 
